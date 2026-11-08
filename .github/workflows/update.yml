@@ -1,0 +1,76 @@
+# Daily: move the test pin to the latest nixos-unstable (new GRUB, sbctl, installer
+# changes), run every test, and only keep the update if everything passes.
+# On failure an issue is opened: the module needs a human (or a PR) to adapt.
+name: Update nixpkgs
+
+on:
+  schedule:
+    - cron: "17 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.update.outputs.changed }}
+      grub: ${{ steps.update.outputs.grub }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - id: update
+        run: |
+          nix flake update
+          if git diff --quiet flake.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "grub=$(nix eval --raw --inputs-from . nixpkgs#grub2.version)" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: steps.update.outputs.changed == 'true'
+        with:
+          name: flake-lock
+          path: flake.lock
+
+  tests:
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    uses: ./.github/workflows/tests.yml
+    with:
+      lock-artifact: flake-lock
+
+  commit:
+    needs: [update, tests]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: flake-lock
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "flake.lock: update nixpkgs (GRUB ${{ needs.update.outputs.grub }}), all tests pass"
+          git push
+
+  report:
+    needs: [update, tests, commit]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="Tests fail with the latest nixos-unstable"
+          number=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number')
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --title "$title" --body "The daily update of nixpkgs breaks at least one test: $RUN_URL"
+          fi
