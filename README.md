@@ -8,9 +8,10 @@ and the rest of `boot.loader.grub.*`, with the whole boot chain verified.
 | Component | Supported | Notes |
 |---|---|---|
 | GRUB | **≥ 2.14** | `--disable-cli` is required for security and only exists since 2.14; older versions are rejected at evaluation time. |
-| NixOS / nixpkgs | **nixos-unstable** (26.11 pre-release, tested 2026-11-07), NixOS ≥ 26.11 | NixOS 25.11 and 26.05 ship GRUB 2.12: not supported. |
+| NixOS / nixpkgs | **nixos-unstable** (26.11 pre-release, tested 2026-11-07), NixOS ≥ 26.11 | NixOS 25.11 and 26.05 ship GRUB 2.12. On 26.05, taking GRUB from unstable works (same `install-grub.pl`): `nixpkgs.overlays = [ (_: _: { grub2 = pkgs-unstable.grub2; }) ];` |
 | sbctl | 0.18 (tested) | Keys in `/var/lib/sbctl`. |
 | Platform | x86_64 UEFI (tested) | i386-efi and arm64-efi are wired but untested. BIOS boot is not supported. |
+| Real hardware | 1 x86_64 UEFI laptop (2026-11-09) | NixOS 26.05 + GRUB 2.14 from unstable, automatic enrollment with `--microsoft`, os-prober dual boot with Windows, minegrub-world-sel theme, older generations, `fwsetup` entry. |
 
 ## Usage
 
