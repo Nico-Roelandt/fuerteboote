@@ -1,7 +1,10 @@
-# grub-secureboot
+# fuerteboote
 
 UEFI Secure Boot for **GRUB** on NixOS: keep your GRUB themes, fonts, os-prober
 and the rest of `boot.loader.grub.*`, with the whole boot chain verified.
+
+*Fuerte* is Spanish for "strong", a nod to its systemd-boot cousin
+[lanzaboote](https://github.com/nix-community/lanzaboote).
 
 ## Supported versions
 
@@ -17,10 +20,10 @@ and the rest of `boot.loader.grub.*`, with the whole boot chain verified.
 
 ```nix
 # flake.nix
-inputs.grub-secureboot.url = "github:hugoallaine/nixos-secure-boot";
+inputs.fuerteboote.url = "github:hugoallaine/fuerteboote";
 
 # configuration.nix
-imports = [ inputs.grub-secureboot.nixosModules.default ];
+imports = [ inputs.fuerteboote.nixosModules.default ];
 boot.loader.grub.secureBoot.enable = true;
 # Optional: enroll the keys automatically when the firmware is in Setup Mode.
 boot.loader.grub.secureBoot.autoEnrollKeys.enable = true;

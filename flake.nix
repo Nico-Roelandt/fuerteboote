@@ -1,5 +1,5 @@
 {
-  description = "UEFI Secure Boot for GRUB on NixOS";
+  description = "fuerteboote: UEFI Secure Boot for GRUB on NixOS";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
